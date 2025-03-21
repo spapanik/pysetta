@@ -1,0 +1,68 @@
+import sys
+from argparse import ArgumentParser, Namespace
+from pathlib import Path
+
+from pysetta.__version__ import __version__
+
+sys.tracebacklimit = 0
+
+
+def parse_args() -> Namespace:
+    parser = ArgumentParser(prog="pysetta", description="Universal translator")
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="print the version and exit",
+    )
+
+    parent_parser = ArgumentParser(add_help=False)
+    parent_parser.add_argument(
+        "-d",
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="do not write to the output file",
+    )
+    parent_parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        dest="verbosity",
+        help="increase the level of verbosity",
+    )
+    parent_parser.add_argument(
+        "templates",
+        nargs="+",
+        type=Path,
+        help="path to the template file",
+        default=None,
+    )
+
+    subparsers = parser.add_subparsers(dest="subcommand", required=True)
+
+    subparsers.add_parser("generate", parents=[parent_parser])
+    subparsers.add_parser("translate", parents=[parent_parser])
+
+    args = parser.parse_args()
+    if args.verbosity > 0:
+        sys.tracebacklimit = 1000
+
+    templates: set[Path] = set()
+    for template in args.templates:
+        if template.is_dir():
+            templates.update(
+                file.resolve() for file in template.rglob("*") if file.is_file()
+            )
+        else:
+            templates.add(template.resolve())
+
+    if not templates:
+        msg = "No templates found. Please provide at least one template."
+        raise ValueError(msg)
+
+    args.templates = sorted(template for template in templates)
+
+    return args
