@@ -1,0 +1,16 @@
+# cache
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.cov_cache/
+
+# installation/build artifacts
+.yamk/
+dist/
+uv.lock
+
+# local dev
+/cookbook.yaml.d/
+local/
+local.*
